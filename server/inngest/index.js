@@ -7,7 +7,7 @@ export const inngest = new Inngest({ id: "project-management" });
 // inngest function to save user data to a database
 const syncUserCreation = inngest.createFunction(
     { id: 'sync-user-from-clerk' },
-    { event: 'user.created' },
+    { event: 'clerk/user.created' },
     async ({ event }) => {
         const { data } = event
         await prisma.user.create({
@@ -24,7 +24,7 @@ const syncUserCreation = inngest.createFunction(
 //inngest function to delete the user data
 const syncUserDeletion = inngest.createFunction(
     { id: 'delete-user-from-clerk' },
-    { event: 'user.deleted' },
+    { event: 'clerk/user.deleted' },
     async ({ event }) => {
         const { data } = event
         await prisma.user.delete({
@@ -39,7 +39,7 @@ const syncUserDeletion = inngest.createFunction(
 
 const syncUserUpdation = inngest.createFunction(
     { id: 'update-user-from-clerk' },
-    { event: 'user.updated' },
+    { event: 'clerk/user.updated' },
     async ({ event }) => {
         const { data } = event
         await prisma.user.update({
