@@ -23,18 +23,23 @@ export const inngest = new Inngest({ id: "project-management" });
 
 const syncUserCreation = inngest.createFunction(
     { id: "sync-user-from-clerk" },
-    { event: "user.created" },
+    { event: "clerk/user.created" },
     async ({ event }) => {
-        const { data } = event;
+        const data = event.data;
 
+        // Guard: Clerk sometimes sends empty email_addresses
         if (!data?.email_addresses?.length) {
-            console.log("Missing email, skipping user creation");
+            console.log("User created without email, skipping:", data.id);
             return;
         }
 
         await prisma.user.upsert({
             where: { id: data.id },
-            update: {},
+            update: {
+                email: data.email_addresses[0].email_address,
+                name: `${data.first_name || ""} ${data.last_name || ""}`,
+                image: data.image_url,
+            },
             create: {
                 id: data.id,
                 email: data.email_addresses[0].email_address,
@@ -44,6 +49,7 @@ const syncUserCreation = inngest.createFunction(
         });
     }
 );
+
 
 
 //inngest function to delete the user data
