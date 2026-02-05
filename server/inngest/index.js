@@ -5,21 +5,46 @@ import prisma from "../configs/prisma.js";
 export const inngest = new Inngest({ id: "project-management" });
 
 // inngest function to save user data to a database
+// const syncUserCreation = inngest.createFunction(
+//     { id: 'sync-user-from-clerk' },
+//     { event: 'clerk/user.created' },
+//     async ({ event }) => {
+//         const { data } = event
+//         await prisma.user.create({
+//             data: {
+//                 id: data.id,
+//                 email: data?.email_addresses[0]?.email_address,
+//                 name: data?.first_name + " " + data?.last_name,
+//                 image: data?.image_url,
+//             }
+//         })
+//     }
+// )
+
 const syncUserCreation = inngest.createFunction(
-    { id: 'sync-user-from-clerk' },
-    { event: 'clerk/user.created' },
+    { id: "sync-user-from-clerk" },
+    { event: "user.created" },
     async ({ event }) => {
-        const { data } = event
-        await prisma.user.create({
-            data: {
+        const { data } = event;
+
+        if (!data?.email_addresses?.length) {
+            console.log("Missing email, skipping user creation");
+            return;
+        }
+
+        await prisma.user.upsert({
+            where: { id: data.id },
+            update: {},
+            create: {
                 id: data.id,
-                email: data?.email_addresses[0]?.email_address,
-                name: data?.first_name + " " + data?.last_name,
-                image: data?.image_url,
-            }
-        })
+                email: data.email_addresses[0].email_address,
+                name: `${data.first_name || ""} ${data.last_name || ""}`,
+                image: data.image_url,
+            },
+        });
     }
-)
+);
+
 
 //inngest function to delete the user data
 const syncUserDeletion = inngest.createFunction(
